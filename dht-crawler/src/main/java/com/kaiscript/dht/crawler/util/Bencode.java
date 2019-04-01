@@ -1,5 +1,7 @@
 package com.kaiscript.dht.crawler.util;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.kaiscript.dht.crawler.exception.DhtException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,6 +13,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 /**
  * @link http://bittorrent.org/beps/bep_0003.html
@@ -32,10 +35,17 @@ public class Bencode {
 
     private static final String TYPE_SUFFIX = "e";
 
+    private BiFunction<byte[], Integer, DecodeResult>[] biFunctions = new BiFunction[4];
+
+    public Bencode() {
+        biFunctions[0] = this::decodeInteger;
+        biFunctions[1] = this::decodeString;
+        biFunctions[2] = this::decodeList;
+
+    }
     /**
      * 编码相关
      */
-
 
     /**
      * 字符串编码
@@ -122,13 +132,13 @@ public class Bencode {
      * @param start
      * @return
      */
-    public DecodeResult decodeString(byte[] bytes,int start) {
+    public DecodeResult<String> decodeString(byte[] bytes,int start) {
         if (start >= bytes.length) {
             throw new DhtException("decodeString error");
         }
         int startIndex = ArrayUtils.indexOf(bytes, STRING_SEPARATOR_BYTE, start);
         if (startIndex < 0) {
-            throw new DhtException("decodeString error");
+            throw new DhtException("decodeString " + new String(bytes, charset) + " error.start:" + start);
         }
         int strLen = NumberUtils.toInt(new String(ArrayUtils.subarray(bytes, start, startIndex), charset));
         if (strLen < 0) {
@@ -162,6 +172,65 @@ public class Bencode {
         return new DecodeResult(++endIndex, result);
     }
 
+    /**
+     * 解码list
+     * @param bytes
+     * @param start
+     * @return
+     */
+    public DecodeResult<List<Object>> decodeList(byte[] bytes,int start) {
+        if (start >= bytes.length || bytes[start] != LIST_PREFIX.charAt(0)) {
+            throw new DhtException("decodeList error");
+        }
+        int i = start + 1;
+        List<Object> ret = Lists.newLinkedList();
+        for (;i < bytes.length;) {
+            if (bytes[i] == TYPE_SUFFIX.getBytes(charset)[0]) {
+                break;
+            }
+            DecodeResult<Object> decodeResult = decodeAny(bytes, i);
+            i = decodeResult.index;
+            ret.add(decodeResult.value);
+        }
+        return new DecodeResult<>(++i, ret);
+    }
+
+    /**
+     * 解码dict
+     * @param bytes
+     * @param start
+     * @return
+     */
+    public DecodeResult<Map<String,Object>> decodeDict(byte[] bytes,int start) {
+        if (start >= bytes.length || bytes[start] != DICT_PREFIX.charAt(0)) {
+            throw new DhtException("decodeDict error");
+        }
+        int i = start + 1;
+        Map<String, Object> ret = Maps.newTreeMap();
+        for (; i < bytes.length; ) {
+            if (bytes[i] == TYPE_SUFFIX.getBytes(charset)[0]) {
+                break;
+            }
+            //解析key
+            DecodeResult<String> key = decodeString(bytes, i);
+            //从key的下一位开始解析value
+            DecodeResult<Object> value = decodeAny(bytes, key.index);
+            ret.put(key.value, value.getValue());
+            //更新index，从index开始解析剩余字节
+            i = value.index;
+        }
+        return new DecodeResult<>(++i, ret);
+    }
+
+    public DecodeResult<Object> decodeAny(byte[] bytes, int start) {
+        for (BiFunction<byte[], Integer, DecodeResult> function : biFunctions) {
+            try {
+                return function.apply(bytes, start);
+            } catch (Exception e) {
+            }
+        }
+        throw new DhtException("decodeAny " + new String(bytes, charset) + " error.startIndex:" + start);
+    }
 
     @AllArgsConstructor
     @Getter
