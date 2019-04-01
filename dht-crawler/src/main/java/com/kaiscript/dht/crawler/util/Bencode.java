@@ -1,8 +1,12 @@
 package com.kaiscript.dht.crawler.util;
 
+import com.kaiscript.dht.crawler.exception.DhtException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import java.nio.charset.Charset;
 import java.util.List;
@@ -112,13 +116,60 @@ public class Bencode {
      * 解码相关
      */
 
+    /**
+     * 解码string
+     * @param bytes
+     * @param start
+     * @return
+     */
+    public DecodeResult decodeString(byte[] bytes,int start) {
+        if (start >= bytes.length) {
+            throw new DhtException("decodeString error");
+        }
+        int startIndex = ArrayUtils.indexOf(bytes, STRING_SEPARATOR_BYTE, start);
+        if (startIndex < 0) {
+            throw new DhtException("decodeString error");
+        }
+        int strLen = NumberUtils.toInt(new String(ArrayUtils.subarray(bytes, start, startIndex), charset));
+        if (strLen < 0) {
+            throw new DhtException("decodeString error.length less than 0");
+        }
+        int endIndex = startIndex + strLen + 1;
+        String str = new String(ArrayUtils.subarray(bytes, startIndex + 1, endIndex), charset);
+        return new DecodeResult(endIndex, str);
+    }
+
+    /**
+     * 解码Integer
+     * @param bytes
+     * @param start
+     * @return
+     */
+    public DecodeResult<Long> decodeInteger(byte[] bytes, int start) {
+        if (start >= bytes.length || bytes[start] != INTEGER_PREFIX.charAt(0)) {
+            throw new DhtException("decodeInteger error");
+        }
+        int endIndex = ArrayUtils.indexOf(bytes, TYPE_SUFFIX.getBytes(charset)[0], start);
+        if (endIndex < 0) {
+            throw new DhtException("decode Integer error.length less than 0");
+        }
+        long result = 0;
+        try {
+            result = Long.parseLong(new String(ArrayUtils.subarray(bytes, start + 1, endIndex), charset));
+        } catch (NumberFormatException e) {
+            throw new DhtException("decode Integer error,value not a Integer");
+        }
+        return new DecodeResult(++endIndex, result);
+    }
+
 
     @AllArgsConstructor
     @Getter
     @Setter
-    class DecodeResult{
+    @ToString
+    class DecodeResult<T>{
         int index;
-        String value;
+        T value;
     }
 
 }
