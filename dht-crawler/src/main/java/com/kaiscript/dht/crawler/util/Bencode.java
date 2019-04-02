@@ -37,7 +37,7 @@ public class Bencode {
 
     private static final String LIST_PREFIX = "l";
 
-    private static final String TYPE_SUFFIX = "ERROR";
+    private static final String TYPE_SUFFIX = "e";
 
     private BiFunction<byte[], Integer, DecodeResult>[] biFunctions = new BiFunction[4];
 

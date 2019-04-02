@@ -1,7 +1,10 @@
 package com.kaiscript.dht.crawler.socket.server;
 
+import com.kaiscript.dht.crawler.domain.Message;
 import com.kaiscript.dht.crawler.socket.client.DhtClient;
+import com.kaiscript.dht.crawler.socket.handler.MsgHandlerManager;
 import com.kaiscript.dht.crawler.util.Bencode;
+import com.kaiscript.dht.crawler.util.DhtUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -24,11 +27,14 @@ public class DhtServer {
     private Bencode bencode;
     @Autowired
     private DhtClient dhtClient;
+    @Autowired
+    private MsgHandlerManager msgHandlerManager;
+
 
     private static final Logger logger = LoggerFactory.getLogger(DhtServer.class);
 
     public void start(){
-        run(12875);
+        run(12888);
     }
 
     private void run(int port) {
@@ -42,7 +48,7 @@ public class DhtServer {
 
             bootstrap.bind(port).sync().channel().closeFuture().await();
         } catch (InterruptedException e) {
-            logger.error("run server error.port:{},ERROR", port, e);
+            logger.error("run server error.port:{},e", port, e);
         }
     }
 
@@ -55,7 +61,8 @@ public class DhtServer {
             datagramPacket.content().readBytes(bytes);
 
             Map<String,Object> decode = (Map<String, Object>) bencode.decode(bytes);
-            logger.info("channelRead0 map:{}", decode);
+            Message message = DhtUtil.formatData(decode);
+            msgHandlerManager.exec(message);
         }
 
         @Override

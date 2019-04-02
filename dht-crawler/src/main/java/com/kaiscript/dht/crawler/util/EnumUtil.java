@@ -11,7 +11,7 @@ public class EnumUtil {
 
     public static <T extends CommonEnum<X>, X> Optional<T> getEnum(X type, Class<T> clazz) {
         for (T t : clazz.getEnumConstants()) {
-            if (t.getType() == type) {
+            if (t.getType().equals(type)) {
                 return Optional.of(t);
             }
         }

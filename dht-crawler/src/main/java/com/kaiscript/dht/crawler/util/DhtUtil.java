@@ -2,22 +2,32 @@ package com.kaiscript.dht.crawler.util;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.kaiscript.dht.crawler.constants.QueryEnum;
+import com.kaiscript.dht.crawler.constants.YEnum;
 import com.kaiscript.dht.crawler.domain.Message;
+import com.kaiscript.dht.crawler.domain.Node;
 import com.kaiscript.dht.crawler.exception.DhtException;
 import io.netty.util.CharsetUtil;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+
+import static com.kaiscript.dht.crawler.constants.Constants.NODE_LENGTH;
 
 /**
  * Created by chenkai on 2019/4/2.
  */
 public class DhtUtil {
+
+    private static final Logger logger = LoggerFactory.getLogger(DhtUtil.class);
 
     /**
      * transaction ID 只要16位
@@ -65,16 +75,63 @@ public class DhtUtil {
                 throw new DhtException("beanToMap error");
             }
         });
+        logger.info("ret:{}", ret);
+        Bencode bencode = new Bencode();
+        String s = bencode.encodeDict(ret);
+        logger.info("s:{}", s);
         return ret;
     }
 
-
-    public static Message getMsg(Map<String,Object> data) {
+    /**
+     * 转换收到的map数据
+     * @param data
+     * @return
+     */
+    public static Message formatData(Map<String,Object> data) {
         Message msg = new Message();
         msg.setData(data);
+        String y = getString(data, "y");
+        Optional<YEnum> yEnumOptional = EnumUtil.getEnum(y, YEnum.class);
+        if (!yEnumOptional.isPresent()) {
+            throw new DhtException("param y of msg is error");
+        }
+        YEnum yEnum = yEnumOptional.get();
+        msg.setY(yEnum);
+        if (yEnum == YEnum.QUERY) {
+            String q = getString(data, "q");
+            Optional<QueryEnum> queryEnumOptional = EnumUtil.getEnum(q, QueryEnum.class);
+            if (!queryEnumOptional.isPresent()) {
+                throw new DhtException("param q of msg is error");
+            }
+            QueryEnum queryEnum = queryEnumOptional.get();
+            msg.setQuery(queryEnum);
+        }
         return msg;
     }
 
+    /**
+     * 根据回包r字段获取node列表
+     * @param rMap
+     * @return
+     */
+    public static List<Node> getNodeListByMap(Map<String,Object> rMap) {
+        List<Node> nodeList = Lists.newLinkedList();
+        String nodes = getString(rMap, "nodes");
+        byte[] bytes = nodes.getBytes(CharsetUtil.ISO_8859_1);
+        for (int i = 0; i < bytes.length; i+= NODE_LENGTH) {
+            //todo ip,port字节转换
+        }
+        return nodeList;
+    }
+
+
+    public static String getString(Map<String,Object> map, String param) {
+        return (String) map.get(param);
+    }
+
+    public static Map<String, Object> getMap(Map<String, Object> map, String param) {
+        return (Map<String, Object>) map.get(param);
+    }
 
 
 }

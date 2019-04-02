@@ -1,5 +1,10 @@
 package com.kaiscript.dht.crawler.util;
 
+import com.kaiscript.dht.crawler.domain.FindNode;
+import io.netty.util.CharsetUtil;
+
+import java.util.Map;
+
 /**
  * Created by chenkai on 2019/4/1.
  */
@@ -15,7 +20,14 @@ public class BencodeTest {
         String list = "l5:hello5:worldi101ee";
 //        System.out.println(bencode.decodeList(list.getBytes(), 0));
         String dict = "d2:aai100e2:bb2:bb2:cci200ee";
-        System.out.println(bencode.decodeDict(dict.getBytes(), 0));
+//        System.out.println(bencode.decodeDict(dict.getBytes(), 0));
+        FindNode.Request request = new FindNode.Request(DhtUtil.generateNodeIdStr(), "mnopqrstuvwxyz123477");
+        Map<String, Object> stringObjectMap = DhtUtil.beanToMap(request);
+        System.out.println(stringObjectMap);
+        byte[] bytes = bencode.encodeToBytes(stringObjectMap);
+
+        System.out.println("---------------");
+        System.out.println(new String(bytes, CharsetUtil.ISO_8859_1));
 
     }
 

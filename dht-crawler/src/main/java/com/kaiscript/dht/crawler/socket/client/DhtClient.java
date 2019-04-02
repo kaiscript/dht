@@ -3,6 +3,8 @@ package com.kaiscript.dht.crawler.socket.client;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.socket.DatagramPacket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.net.InetSocketAddress;
@@ -12,6 +14,8 @@ import java.net.InetSocketAddress;
  */
 @Component
 public class DhtClient {
+
+    private static final Logger logger = LoggerFactory.getLogger(DhtClient.class);
 
     /**
      * 对方也是往发送方的端口回复消息，故共用服务端channel
