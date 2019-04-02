@@ -3,12 +3,14 @@ package com.kaiscript.dht.crawler.util;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.kaiscript.dht.crawler.exception.DhtException;
+import io.netty.util.CharsetUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.springframework.stereotype.Component;
 
 import java.nio.charset.Charset;
 import java.util.List;
@@ -17,11 +19,13 @@ import java.util.function.BiFunction;
 
 /**
  * @link http://bittorrent.org/beps/bep_0003.html
+ * BEP-003
  * Created by kaiscript on 2019/3/31.
  */
+@Component
 public class Bencode {
 
-    private static Charset charset = Charset.forName("ISO-8859-1");
+    private static Charset charset = CharsetUtil.ISO_8859_1;
 
     private static final String STRING_SEPARATOR = ":";
 
@@ -33,15 +37,16 @@ public class Bencode {
 
     private static final String LIST_PREFIX = "l";
 
-    private static final String TYPE_SUFFIX = "e";
+    private static final String TYPE_SUFFIX = "ERROR";
 
     private BiFunction<byte[], Integer, DecodeResult>[] biFunctions = new BiFunction[4];
 
     public Bencode() {
-        biFunctions[0] = this::decodeInteger;
-        biFunctions[1] = this::decodeString;
-        biFunctions[2] = this::decodeList;
-
+        //dict,list,integer必须先解析.decodeString是根据:来定位的，先解析string会导致识别出错
+        biFunctions[0] = this::decodeDict;
+        biFunctions[1] = this::decodeList;
+        biFunctions[2] = this::decodeInteger;
+        biFunctions[3] = this::decodeString;
     }
     /**
      * 编码相关
@@ -120,6 +125,10 @@ public class Bencode {
         else{
             throw new RuntimeException("encodeAny object " + object + " error");
         }
+    }
+
+    public byte[] encodeToBytes(Object object) {
+        return toBytes(encodeAny(object));
     }
 
     /**
@@ -222,7 +231,7 @@ public class Bencode {
         return new DecodeResult<>(++i, ret);
     }
 
-    public DecodeResult<Object> decodeAny(byte[] bytes, int start) {
+    private DecodeResult<Object> decodeAny(byte[] bytes, int start) {
         for (BiFunction<byte[], Integer, DecodeResult> function : biFunctions) {
             try {
                 return function.apply(bytes, start);
@@ -230,6 +239,14 @@ public class Bencode {
             }
         }
         throw new DhtException("decodeAny " + new String(bytes, charset) + " error.startIndex:" + start);
+    }
+
+    public Object decode(byte[] bytes) {
+        return decodeAny(bytes, 0).value;
+    }
+
+    public byte[] toBytes(String string) {
+        return string.getBytes(charset);
     }
 
     @AllArgsConstructor
