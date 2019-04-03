@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,23 +34,30 @@ public class DhtServer {
     private DhtClient dhtClient;
     @Autowired
     private MsgHandlerManager msgHandlerManager;
+    @Autowired
+    private List<DhtServerHandler> dhtServerHandlers;
 
     private static final Logger logger = LoggerFactory.getLogger(DhtServer.class);
 
     @SneakyThrows
     public void start(){
-        new Thread(() -> run(12888)).start();
-        Thread.sleep(2000);
+        List<Integer> ports = config.getApp().getPorts();
+        for (int i = 0; i < ports.size(); i++) {
+            Integer port = ports.get(i);
+            int index = i;
+            new Thread(() -> run(index, port)).start();
+        }
+        Thread.sleep(5000);
     }
 
-    private void run(int port) {
+    private void run(int index, int port) {
         logger.info("DhtServer run at port:{}", port);
         try {
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.group(new NioEventLoopGroup())
                     .channel(NioDatagramChannel.class)
                     .option(ChannelOption.SO_BROADCAST, true)
-                    .handler(new DhtServerHandler());
+                    .handler(dhtServerHandlers.get(index));
 
             bootstrap.bind(port).sync().channel().closeFuture().await();
         } catch (InterruptedException e) {
@@ -58,7 +66,25 @@ public class DhtServer {
     }
 
     @ChannelHandler.Sharable
-    public class DhtServerHandler extends SimpleChannelInboundHandler<DatagramPacket>{
+    public static class DhtServerHandler extends SimpleChannelInboundHandler<DatagramPacket>{
+
+        /**
+         * channel索引
+         */
+        private int index;
+
+        private Bencode bencode;
+
+        private DhtClient dhtClient;
+
+        private MsgHandlerManager msgHandlerManager;
+
+        public DhtServerHandler(int index, Bencode bencode, DhtClient dhtClient, MsgHandlerManager msgHandlerManager) {
+            this.index = index;
+            this.bencode = bencode;
+            this.dhtClient = dhtClient;
+            this.msgHandlerManager = msgHandlerManager;
+        }
 
         @Override
         protected void channelRead0(ChannelHandlerContext channelHandlerContext, DatagramPacket datagramPacket) throws Exception {
@@ -67,13 +93,14 @@ public class DhtServer {
 
             Map<String,Object> decode = (Map<String, Object>) bencode.decode(bytes);
             Message message = DhtUtil.formatData(decode);
+            message.setIndex(index);
             msgHandlerManager.exec(message);
         }
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             Channel channel = ctx.channel();
-            dhtClient.setChannel(channel);
+            dhtClient.setChannel(index, channel);
         }
 
     }

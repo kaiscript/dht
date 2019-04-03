@@ -28,6 +28,8 @@ public class Message {
      */
     private String tId;
 
+    private int index;
+
     private InetSocketAddress srcAddress;
 
 }

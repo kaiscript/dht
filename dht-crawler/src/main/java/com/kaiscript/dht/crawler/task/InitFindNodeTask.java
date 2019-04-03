@@ -40,14 +40,16 @@ public class InitFindNodeTask {
     public void start() {
 
         List<String> initAddresses = config.getApp().getInitAddresses();
+        List<Integer> ports = config.getApp().getPorts();
         String nodeId = config.getApp().getNodeId();
 
-        initAddresses.forEach(s -> {
+        for (int i = 0; i < ports.size(); i++) {
+            String s = initAddresses.get(i / initAddresses.size());
             FindNode.Request request = new FindNode.Request(DhtUtil.generateNodeIdStr(), nodeId);
             String[] split = s.split(":");
             InetSocketAddress address = new InetSocketAddress(split[0], NumberUtils.toInt(split[1]));
-            dhtClient.writeAndFlush(address, bencode.encodeToBytes(DhtUtil.beanToMap(request)));
-        });
+            dhtClient.writeAndFlush(address, bencode.encodeToBytes(DhtUtil.beanToMap(request)), i);
+        }
 
     }
 

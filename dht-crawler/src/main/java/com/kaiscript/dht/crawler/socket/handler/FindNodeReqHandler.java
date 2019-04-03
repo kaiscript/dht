@@ -37,7 +37,7 @@ public class FindNodeReqHandler implements MsgHandler{
         byte[] nodeBytes = Node.toBytes(nodeList);
         FindNode.Response response = new FindNode.Response(nodeId, new String(nodeBytes, CharsetUtil.ISO_8859_1));
         //回复其他节点的findNode
-        dhtClient.writeAndFlush(message.getSrcAddress(), bencode.encodeToBytes(DhtUtil.beanToMap(response)));
+        dhtClient.writeAndFlush(message.getSrcAddress(), bencode.encodeToBytes(DhtUtil.beanToMap(response)), message.getIndex());
     }
 
     @Override
