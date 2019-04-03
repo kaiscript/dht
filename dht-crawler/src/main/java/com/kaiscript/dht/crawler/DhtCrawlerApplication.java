@@ -1,6 +1,7 @@
 package com.kaiscript.dht.crawler;
 
 import com.kaiscript.dht.crawler.socket.server.DhtServer;
+import com.kaiscript.dht.crawler.task.FindNodeTask;
 import com.kaiscript.dht.crawler.task.InitFindNodeTask;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
@@ -17,7 +18,8 @@ public class DhtCrawlerApplication implements ApplicationRunner {
 
 	@Autowired
 	private InitFindNodeTask initFindNodeTask;
-
+	@Autowired
+	private FindNodeTask findNodeTask;
 
 	public static void main(String[] args) {
 		SpringApplication.run(DhtCrawlerApplication.class, args);
@@ -28,6 +30,7 @@ public class DhtCrawlerApplication implements ApplicationRunner {
 	public void run(ApplicationArguments args) throws Exception {
 		dhtServer.start();
 		initFindNodeTask.start();
+		findNodeTask.start();
 	}
 
 }

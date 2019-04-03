@@ -2,6 +2,9 @@ package com.kaiscript.dht.crawler.socket.client;
 
 import com.google.common.collect.Lists;
 import com.kaiscript.dht.crawler.config.Config;
+import com.kaiscript.dht.crawler.domain.FindNode;
+import com.kaiscript.dht.crawler.util.Bencode;
+import com.kaiscript.dht.crawler.util.DhtUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.socket.DatagramPacket;
@@ -27,6 +30,9 @@ public class DhtClient {
     private List<Channel> channels = Lists.newArrayList();
 
     @Autowired
+    private Bencode bencode;
+
+    @Autowired
     public void init(Config config) {
         logger.info("init DhtClient config...");
         List<Integer> ports = config.getApp().getPorts();
@@ -39,6 +45,17 @@ public class DhtClient {
 
     public void setChannel(int index, Channel channel) {
         channels.set(index, channel);
+    }
+
+    /**
+     *
+     * @param address 发送地址
+     * @param nodeId 目标node
+     * @param index channel索引
+     */
+    public void findNode(InetSocketAddress address, String nodeId, int index) {
+        FindNode.Request request = new FindNode.Request(nodeId, DhtUtil.generateNodeIdStr());
+        writeAndFlush(address, bencode.encodeToBytes(DhtUtil.beanToMap(request)), index);
     }
 
 }

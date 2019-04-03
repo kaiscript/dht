@@ -1,14 +1,7 @@
 package com.kaiscript.dht.crawler.task;
 
 import com.kaiscript.dht.crawler.config.Config;
-import com.kaiscript.dht.crawler.domain.FindNode;
 import com.kaiscript.dht.crawler.socket.client.DhtClient;
-import com.kaiscript.dht.crawler.util.Bencode;
-import com.kaiscript.dht.crawler.util.DhtUtil;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.text.RandomStringGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +24,6 @@ public class InitFindNodeTask {
 
     @Autowired
     private Config config;
-    @Autowired
-    private Bencode bencode;
 
     @Autowired
     private DhtClient dhtClient;
@@ -41,14 +32,13 @@ public class InitFindNodeTask {
 
         List<String> initAddresses = config.getApp().getInitAddresses();
         List<Integer> ports = config.getApp().getPorts();
-        String nodeId = config.getApp().getNodeId();
+        List<String> nodeIds = config.getApp().getNodeIds();
 
-        for (int i = 0; i < ports.size(); i++) {
+        for (int i = 0; i < Math.min(ports.size(), nodeIds.size()); i++) {
             String s = initAddresses.get(i / initAddresses.size());
-            FindNode.Request request = new FindNode.Request(DhtUtil.generateNodeIdStr(), nodeId);
             String[] split = s.split(":");
             InetSocketAddress address = new InetSocketAddress(split[0], NumberUtils.toInt(split[1]));
-            dhtClient.writeAndFlush(address, bencode.encodeToBytes(DhtUtil.beanToMap(request)), i);
+            dhtClient.findNode(address, nodeIds.get(i), i);
         }
 
     }

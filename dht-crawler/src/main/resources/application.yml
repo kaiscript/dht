@@ -1,6 +1,9 @@
 dht:
   app:
-    node-id: mnopqrstuvwxyz123456
+    node-ids:
+      - mnopqrstuvwxyz123456
+      - mnopqrstuvwxyz123477
+      - mnopqrstuvwxyz123488
     ports:
       - 12888
       - 12889

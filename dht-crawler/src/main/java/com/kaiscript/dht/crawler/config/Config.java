@@ -22,7 +22,7 @@ public class Config {
     @Data
     public static class App {
 
-        private String nodeId;
+        private List<String> nodeIds;
 
         private List<Integer> ports;
 

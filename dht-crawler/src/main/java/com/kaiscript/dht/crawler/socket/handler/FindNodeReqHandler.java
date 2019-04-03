@@ -33,11 +33,12 @@ public class FindNodeReqHandler implements MsgHandler{
     @Override
     public void handle(Message message) {
         List<Node> nodeList = routeTable.get8Node();
-        String nodeId = config.getApp().getNodeId();
+        List<String> targetNodeIds = config.getApp().getNodeIds();
         byte[] nodeBytes = Node.toBytes(nodeList);
-        FindNode.Response response = new FindNode.Response(nodeId, new String(nodeBytes, CharsetUtil.ISO_8859_1));
+        FindNode.Response response = new FindNode.Response(targetNodeIds.get(message.getIndex()), new String(nodeBytes, CharsetUtil.ISO_8859_1));
         //回复其他节点的findNode
         dhtClient.writeAndFlush(message.getSrcAddress(), bencode.encodeToBytes(DhtUtil.beanToMap(response)), message.getIndex());
+
     }
 
     @Override
