@@ -1,0 +1,10 @@
+dht:
+  app:
+    node-id: mnopqrstuvwxyz123456
+    ports:
+      - 12888
+      - 12889
+      - 12890
+    init-addresses:
+      - router.utorrent.com:6881
+      - router.bittorrent.com:6881

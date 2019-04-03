@@ -1,5 +1,6 @@
 package com.kaiscript.dht.crawler.socket.server;
 
+import com.kaiscript.dht.crawler.config.Config;
 import com.kaiscript.dht.crawler.domain.Message;
 import com.kaiscript.dht.crawler.socket.client.DhtClient;
 import com.kaiscript.dht.crawler.socket.handler.MsgHandlerManager;
@@ -10,6 +11,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,21 +26,24 @@ import java.util.Map;
 public class DhtServer {
 
     @Autowired
+    private Config config;
+    @Autowired
     private Bencode bencode;
     @Autowired
     private DhtClient dhtClient;
     @Autowired
     private MsgHandlerManager msgHandlerManager;
 
-
     private static final Logger logger = LoggerFactory.getLogger(DhtServer.class);
 
+    @SneakyThrows
     public void start(){
-        run(12888);
+        new Thread(() -> run(12888)).start();
+        Thread.sleep(2000);
     }
 
     private void run(int port) {
-        logger.info("DhtServer run port:{}", port);
+        logger.info("DhtServer run at port:{}", port);
         try {
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.group(new NioEventLoopGroup())

@@ -1,10 +1,13 @@
 package com.kaiscript.dht.crawler.socket.handler;
 
+import com.kaiscript.dht.crawler.constants.YEnum;
 import com.kaiscript.dht.crawler.domain.Message;
 import com.kaiscript.dht.crawler.domain.Node;
+import com.kaiscript.dht.crawler.route.RouteTable;
 import com.kaiscript.dht.crawler.util.DhtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -18,17 +21,20 @@ public class FindNodeRespHandler implements MsgHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(FindNodeRespHandler.class);
 
+    @Autowired
+    private RouteTable routeTable;
+
     @Override
     public void handle(Message message) {
         Map<String, Object> data = message.getData();
         Map<String, Object> rMap = DhtUtil.getMap(data, "r");
         List<Node> nodeList = DhtUtil.getNodeListByMap(rMap);
-        logger.info("nodeList:{}", nodeList);
+        nodeList.forEach(node -> routeTable.put(node));
     }
 
     @Override
     public boolean isExec(Message message) {
-        return true;
+        return message.getY() == YEnum.RESPONSE;
     }
 
 }

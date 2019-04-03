@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.net.InetSocketAddress;
 import java.util.Map;
 
 /**
@@ -22,5 +23,11 @@ public class Message {
 
     private Map<String, Object> data;
 
+    /**
+     * t字段
+     */
+    private String tId;
+
+    private InetSocketAddress srcAddress;
 
 }

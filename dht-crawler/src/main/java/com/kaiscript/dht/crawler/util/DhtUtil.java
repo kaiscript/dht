@@ -9,7 +9,9 @@ import com.kaiscript.dht.crawler.domain.Node;
 import com.kaiscript.dht.crawler.exception.DhtException;
 import io.netty.util.CharsetUtil;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ReflectionUtils;
@@ -75,10 +77,6 @@ public class DhtUtil {
                 throw new DhtException("beanToMap error");
             }
         });
-        logger.info("ret:{}", ret);
-        Bencode bencode = new Bencode();
-        String s = bencode.encodeDict(ret);
-        logger.info("s:{}", s);
         return ret;
     }
 
@@ -106,6 +104,12 @@ public class DhtUtil {
             QueryEnum queryEnum = queryEnumOptional.get();
             msg.setQuery(queryEnum);
         }
+        //t字段，消息id
+        String tId = getString(data, "t");
+        if (StringUtils.isNotBlank(tId)) {
+            msg.setTId(tId);
+        }
+
         return msg;
     }
 
@@ -119,7 +123,8 @@ public class DhtUtil {
         String nodes = getString(rMap, "nodes");
         byte[] bytes = nodes.getBytes(CharsetUtil.ISO_8859_1);
         for (int i = 0; i < bytes.length; i+= NODE_LENGTH) {
-            //todo ip,port字节转换
+            Node node = Node.buildNode(ArrayUtils.subarray(bytes, i, i + NODE_LENGTH));
+            nodeList.add(node);
         }
         return nodeList;
     }
