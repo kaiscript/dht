@@ -13,9 +13,9 @@ public class CommonParam {
 
     /**
      * 一个字节,表明消息体类型<br/>
-     * QUERY 表示请求(请求Queries)<br/>
-     * RESPONSE 表示回复(回复 Responses)<br/>
-     * ERROR 表示错误(错误 Errors)<br/>
+     * q 表示请求(请求Queries)<br/>
+     * r 表示回复(回复 Responses)<br/>
+     * e 表示错误(错误 Errors)<br/>
      */
     public String y;
 

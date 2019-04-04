@@ -28,7 +28,7 @@ public class FindNodeTask {
     /**
      * 待发送find_node的节点
      */
-    public BlockingQueue<Node> queue = new LinkedBlockingQueue<>();
+    private BlockingQueue<Node> queue = new LinkedBlockingQueue<>();
 
     public void putNode(Node node) {
         queue.offer(node);
