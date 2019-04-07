@@ -10,6 +10,7 @@ import com.kaiscript.dht.crawler.socket.client.DhtClient;
 import com.kaiscript.dht.crawler.util.Bencode;
 import com.kaiscript.dht.crawler.util.DhtUtil;
 import io.netty.util.CharsetUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,7 @@ import java.util.List;
  * Created by chenkai on 2019/4/3.
  */
 @Component
+@Slf4j
 public class FindNodeReqHandler implements MsgHandler{
 
     @Autowired
@@ -38,7 +40,7 @@ public class FindNodeReqHandler implements MsgHandler{
         FindNode.Response response = new FindNode.Response(targetNodeIds.get(message.getIndex()), new String(nodeBytes, CharsetUtil.ISO_8859_1));
         //回复其他节点的findNode
         dhtClient.writeAndFlush(message.getSrcAddress(), bencode.encodeToBytes(DhtUtil.beanToMap(response)), message.getIndex());
-
+        log.info("FindNodeReq ip:{}.port:{}", message.getSrcAddress().getHostName(), message.getSrcAddress().getPort());
     }
 
     @Override

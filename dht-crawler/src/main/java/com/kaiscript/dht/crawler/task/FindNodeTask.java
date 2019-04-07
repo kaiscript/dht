@@ -1,5 +1,6 @@
 package com.kaiscript.dht.crawler.task;
 
+import com.google.common.collect.Sets;
 import com.kaiscript.dht.crawler.config.Config;
 import com.kaiscript.dht.crawler.domain.Node;
 import com.kaiscript.dht.crawler.socket.client.DhtClient;
@@ -7,10 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.net.InetSocketAddress;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.Set;
+import java.util.concurrent.*;
 
 /**
  * Created by kaiscript on 2019/4/3.
@@ -25,6 +27,15 @@ public class FindNodeTask {
     @Autowired
     private DhtClient dhtClient;
 
+    private Set<String> set = Sets.newHashSet();
+
+    ScheduledExecutorService service = Executors.newScheduledThreadPool(2);
+
+    @PostConstruct
+    public void staticsIpSize() {
+        service.scheduleAtFixedRate(() -> log.info("ip size:{}", set.size()), 1, 5, TimeUnit.SECONDS);
+    }
+
     /**
      * 待发送find_node的节点
      */
@@ -32,12 +43,13 @@ public class FindNodeTask {
 
     public void putNode(Node node) {
         queue.offer(node);
+        set.add(node.getIp());
     }
 
     public void start() {
 
         List<String> nodeIds = config.getApp().getNodeIds();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 100; i++) {
             new Thread(() -> {
                 while (true){
                     try {

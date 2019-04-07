@@ -85,13 +85,14 @@ public class DhtUtil {
      * @param data
      * @return
      */
-    public static Message formatData(Map<String,Object> data) {
+    public static Optional<Message> formatData(Map<String,Object> data) {
         Message msg = new Message();
         msg.setData(data);
         String y = getString(data, "y");
         Optional<YEnum> yEnumOptional = EnumUtil.getEnum(y, YEnum.class);
         if (!yEnumOptional.isPresent()) {
-            throw new DhtException("param y of msg is error");
+            logger.info("param y of msg is error.map:" + data);
+            return Optional.empty();
         }
         YEnum yEnum = yEnumOptional.get();
         msg.setY(yEnum);
@@ -110,7 +111,7 @@ public class DhtUtil {
             msg.setTId(tId);
         }
 
-        return msg;
+        return Optional.of(msg);
     }
 
     /**

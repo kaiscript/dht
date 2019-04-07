@@ -1,9 +1,12 @@
 package com.kaiscript.dht.crawler.util;
 
+import lombok.SneakyThrows;
+import org.apache.commons.codec.binary.Hex;
+
 /**
  * Created by chenkai on 2019/4/3.
  */
-public class IpUtil {
+public class ByteUtil {
 
     /**
      * 字节数组转ip
@@ -24,7 +27,7 @@ public class IpUtil {
      * @param bytes
      * @return
      */
-    public static int bytes2Port(byte[] bytes) {
+    public static int bytes2Int(byte[] bytes) {
         return (bytes[0] & 0xFF) << 8 |
                 (bytes[1] & 0xFF);
     }
@@ -35,11 +38,31 @@ public class IpUtil {
      * @param port
      * @return
      */
-    public static byte[] port2Int(int port) {
+    public static byte[] int2Bytes(int port) {
         byte[] bytes = new byte[2];
         bytes[0] = (byte) ((port >> 8) & 0xFF);
         bytes[1] = (byte) (port & 0xFF);
         return bytes;
+    }
+
+    /**
+     * 字节转16进制
+     * @param bytes
+     * @return
+     */
+    public static String byte2HexString(byte[] bytes) {
+        return Hex.encodeHexString(bytes);
+    }
+
+    /**
+     * 16进制转字节
+     * @param hexStr
+     * @return
+     */
+    @SneakyThrows
+    public static byte[] hexStr2Bytes(String hexStr) {
+        return Hex.decodeHex(hexStr);
+
     }
 
 }

@@ -30,6 +30,9 @@ public class Message {
 
     private int index;
 
+    /**
+     * 源ip
+     */
     private InetSocketAddress srcAddress;
 
 }

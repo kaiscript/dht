@@ -2,8 +2,7 @@ package com.kaiscript.dht.crawler.domain;
 
 import com.kaiscript.dht.crawler.constants.Constants;
 import com.kaiscript.dht.crawler.exception.DhtException;
-import com.kaiscript.dht.crawler.util.IpUtil;
-import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
+import com.kaiscript.dht.crawler.util.ByteUtil;
 import io.netty.util.CharsetUtil;
 import lombok.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -40,8 +39,8 @@ public class Node {
         byte[] nodeIdBytes = ArrayUtils.subarray(bytes, 0, 20);
         byte[] ipBytes = ArrayUtils.subarray(bytes, 20, 24);
         byte[] portBytes = ArrayUtils.subarray(bytes, 24, 26);
-        String ip = IpUtil.bytes2Ip(ipBytes);
-        int port = IpUtil.bytes2Port(portBytes);
+        String ip = ByteUtil.bytes2Ip(ipBytes);
+        int port = ByteUtil.bytes2Int(portBytes);
         return new Node(new String(nodeIdBytes, CharsetUtil.ISO_8859_1), ip, port);
     }
 
@@ -80,7 +79,7 @@ public class Node {
         }
         System.arraycopy(ipBytes, 0, nodeBytes, 20, 4);
         //转换端口字节
-        byte[] portBytes = IpUtil.port2Int(node.getPort());
+        byte[] portBytes = ByteUtil.int2Bytes(node.getPort());
         System.arraycopy(portBytes, 0, nodeBytes, 24, 2);
 
         return nodeBytes;

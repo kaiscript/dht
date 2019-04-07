@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created by chenkai on 2019/4/2.
@@ -92,8 +93,14 @@ public class DhtServer {
             datagramPacket.content().readBytes(bytes);
 
             Map<String,Object> decode = (Map<String, Object>) bencode.decode(bytes);
-            Message message = DhtUtil.formatData(decode);
+            Optional<Message> messageOptional = DhtUtil.formatData(decode);
+            if (!messageOptional.isPresent()) {
+                return;
+            }
+            Message message = messageOptional.get();
             message.setIndex(index);
+            message.setSrcAddress(datagramPacket.sender());
+
             msgHandlerManager.exec(message);
         }
 
