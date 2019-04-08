@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.kaiscript.dht.crawler.constants.QueryEnum;
 import com.kaiscript.dht.crawler.constants.YEnum;
 import com.kaiscript.dht.crawler.domain.Message;
+import com.kaiscript.dht.crawler.domain.Metadata;
 import com.kaiscript.dht.crawler.domain.Node;
 import com.kaiscript.dht.crawler.exception.DhtException;
 import io.netty.util.CharsetUtil;
@@ -17,10 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.kaiscript.dht.crawler.constants.Constants.NODE_LENGTH;
 
@@ -139,5 +138,43 @@ public class DhtUtil {
         return (Map<String, Object>) map.get(param);
     }
 
+    /**
+     * metadata数据转bean
+     * @param map
+     * @param infohash
+     * @return
+     */
+    public static Metadata convert(Map<String,Object> map,String infohash) {
+        Metadata metadata = new Metadata();
+        List<Metadata.Info> infos = Lists.newArrayList();
+        metadata.setName((String) map.get("name")).setInfohash(infohash);
+        if (map.containsKey("files")) {
+            List<Map<String,Object>> files = (List<Map<String, Object>>) map.get("files");
+            infos = files.parallelStream().map(file -> {
+                Metadata.Info info = new Metadata.Info();
+                info.setLength((Long) file.get("length"));
+                Object pathObj = file.get("path");
+                if (pathObj instanceof String) {
+                    info.setPath((String) pathObj);
+                } else if (pathObj instanceof List) {
+                    List<String> pathList = (List<String>) pathObj;
+                    StringBuilder sb = new StringBuilder();
+                    for (String path : pathList) {
+                        sb.append("/").append(path);
+                    }
+                    info.setPath(sb.toString());
+                }
+                return info;
+            }).collect(Collectors.toList());
+            metadata.setLength(infos.stream().mapToLong(Metadata.Info::getLength).sum());
+        }
+        else {
+            long length = (long) map.get("length");
+            infos = Collections.singletonList(new Metadata.Info(metadata.getName(), length));
+            metadata.setLength(length);
+        }
+        metadata.setInfos(infos);
+        return metadata;
+    }
 
 }

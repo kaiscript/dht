@@ -5,6 +5,7 @@ import com.kaiscript.dht.crawler.util.Bencode;
 import com.kaiscript.dht.crawler.util.ByteUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.util.CharsetUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -129,6 +130,21 @@ public class MetadataService {
             System.arraycopy(metadataMapBytes, 0, allMetadataMapBytes, 6, metadataMapBytes.length);
             channel.writeAndFlush(Unpooled.copiedBuffer(allMetadataMapBytes));
         }
+    }
+
+    /**
+     * 获取二进制数据。
+     * metadata数据
+     * Example:
+     {'msg_type': 1, 'piece': 0, 'total_size': 3425}
+     d8:msg_typei1e5:piecei0e10:total_sizei34256eexxxxxxxx...
+     The x represents binary data (the metadata).
+     * @param msgStr
+     * @return
+     */
+    public byte[] fetchMetadata(String msgStr) {
+        String resultStr = msgStr.substring(msgStr.indexOf("ee") + 2, msgStr.length());
+        return resultStr.getBytes(CharsetUtil.ISO_8859_1);
     }
 
 }
