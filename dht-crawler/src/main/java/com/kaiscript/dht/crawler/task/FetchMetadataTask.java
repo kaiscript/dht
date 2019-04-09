@@ -13,6 +13,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.CharsetUtil;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +27,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Created by kaiscript on 2019/4/8.
  */
 @Component
+@Slf4j
 public class FetchMetadataTask {
 
     private Bootstrap bootstrap;
@@ -61,6 +63,11 @@ public class FetchMetadataTask {
             new Thread(() -> {
                 while (true) {
                     fetchMetadata();
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }).start();
         }
@@ -71,6 +78,7 @@ public class FetchMetadataTask {
         if (fetchMetadata == null) {
             return;
         }
+        log.info("fetchMetadata:{}", fetchMetadata);
         byte[] ret = null;
         String infohashHex = fetchMetadata.getInfohash();
         byte[] infohashBytes = ByteUtil.hexStr2Bytes(infohashHex);
@@ -81,6 +89,7 @@ public class FetchMetadataTask {
                 .addListener(new ConnectListener(infohashBytes, DhtUtil.generateNodeId()));
         if (ret != null) {
             Metadata metadata = bytes2Metadata(ret, fetchMetadata.getInfohash());
+            log.info("metadata:{}", metadata);
         }
     }
 

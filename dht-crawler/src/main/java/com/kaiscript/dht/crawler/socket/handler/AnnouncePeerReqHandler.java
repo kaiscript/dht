@@ -2,8 +2,10 @@ package com.kaiscript.dht.crawler.socket.handler;
 
 import com.kaiscript.dht.crawler.constants.YEnum;
 import com.kaiscript.dht.crawler.domain.AnnouncePeer;
+import com.kaiscript.dht.crawler.domain.FetchMetadata;
 import com.kaiscript.dht.crawler.domain.Message;
 import com.kaiscript.dht.crawler.domain.Node;
+import com.kaiscript.dht.crawler.task.FetchMetadataTask;
 import com.kaiscript.dht.crawler.task.FindNodeTask;
 import com.kaiscript.dht.crawler.util.DhtUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,9 @@ public class AnnouncePeerReqHandler implements MsgHandler {
 
     @Autowired
     private FindNodeTask findNodeTask;
+
+    @Autowired
+    private FetchMetadataTask fetchMetadataTask;
 
     @Override
     public void handle(Message message) {
@@ -46,6 +51,7 @@ public class AnnouncePeerReqHandler implements MsgHandler {
         findNode.setIp(srcAddress.getHostName());
         findNode.setPort(requestContent.getPort());
         findNodeTask.putNode(findNode);
+        fetchMetadataTask.offer(new FetchMetadata(srcAddress.getHostName(), requestContent.getPort(), infoHash));
     }
 
     @Override

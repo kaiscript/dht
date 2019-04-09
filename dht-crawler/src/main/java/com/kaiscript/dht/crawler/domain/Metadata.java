@@ -12,6 +12,7 @@ import java.util.List;
 @Getter
 @Setter
 @Accessors(chain = true)
+@ToString
 public class Metadata {
 
     private long length;
