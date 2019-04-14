@@ -42,7 +42,7 @@ public class FindNodeTask {
     private BlockingQueue<Node> queue = new LinkedBlockingQueue<>();
 
     public void putNode(Node node) {
-        if (queue.size() >= 100000) {
+        if (queue.size() >= 10000) {
             return;
         }
         queue.offer(node);
@@ -65,7 +65,7 @@ public class FindNodeTask {
                             InetSocketAddress address = new InetSocketAddress(node.getIp(), node.getPort());
                             dhtClient.findNode(address, nodeIds.get(j % nodeIds.size()), j);
                         }
-                        Thread.sleep(300);
+                        Thread.sleep(10);
                     } catch (Exception e) {
                         log.error("findNode e:", e);
                     }

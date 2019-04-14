@@ -166,6 +166,7 @@ public class FetchMetadataTask {
                 metadataService.sendRequestMetadata(messageStr, channel);
             }
             //收到的 Extension消息包含msg_type,则可能包含数据
+            log.info("receive:{}", new String(msgBytes, CharsetUtil.UTF_8));
             if (messageStr.contains("msg_type")) {
                 ret.setRet(metadataService.fetchMetadata(messageStr));
                 ret.getCountDownLatch().countDown();
@@ -183,6 +184,7 @@ public class FetchMetadataTask {
     private Metadata bytes2Metadata(byte[] bytes,String infohash) {
         String str = new String(bytes, CharsetUtil.UTF_8);
         //种子文件的sha1 杂凑值前是 6:pieces
+        Bencode bencode = new Bencode(CharsetUtil.UTF_8);
         String bencodedMetadata = str.substring(0, str.indexOf("6:pieces")) + "e";
         Map<String,Object> map = (Map<String, Object>) bencode.decode(bencodedMetadata.getBytes(CharsetUtil.UTF_8));
         return DhtUtil.convert(map, infohash);

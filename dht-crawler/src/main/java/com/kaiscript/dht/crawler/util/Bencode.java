@@ -41,13 +41,23 @@ public class Bencode {
 
     private BiFunction<byte[], Integer, DecodeResult>[] biFunctions = new BiFunction[4];
 
+    public Bencode(Charset charset) {
+        this.charset = charset;
+        init();
+    }
+
     public Bencode() {
+        init();
+    }
+
+    private void init() {
         //dict,list,integer必须先解析.decodeString是根据:来定位的，先解析string会导致识别出错
         biFunctions[0] = this::decodeDict;
         biFunctions[1] = this::decodeList;
         biFunctions[2] = this::decodeInteger;
         biFunctions[3] = this::decodeString;
     }
+
     /**
      * 编码相关
      */
