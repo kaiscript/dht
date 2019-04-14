@@ -11,6 +11,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.util.CharsetUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,12 +60,12 @@ public class FetchMetadataTask {
     }
 
     public void startFetch() {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 100; i++) {
             new Thread(() -> {
                 while (true) {
                     fetchMetadata();
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(500);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -100,7 +101,9 @@ public class FetchMetadataTask {
 
         @Override
         protected void initChannel(Channel ch) throws Exception {
-            ch.pipeline().addLast(new FetchMetadataHandler(ret));
+            ch.pipeline()
+                    .addLast(new ReadTimeoutHandler(10))
+                    .addLast(new FetchMetadataHandler(ret));
         }
 
     }
@@ -144,6 +147,7 @@ public class FetchMetadataTask {
              * 第一个字节是19时为握手消息,需要回复拓展消息
              */
             if (msgBytes[0] == (byte) 19) {
+                log.info("sendExtendHandshakeMsg pre");
                 metadataService.sendExtendHandshakeMsg(channel);
             }
 

@@ -30,12 +30,6 @@ public class DhtServer {
     @Autowired
     private Config config;
     @Autowired
-    private Bencode bencode;
-    @Autowired
-    private DhtClient dhtClient;
-    @Autowired
-    private MsgHandlerManager msgHandlerManager;
-    @Autowired
     private List<DhtServerHandler> dhtServerHandlers;
 
     private static final Logger logger = LoggerFactory.getLogger(DhtServer.class);

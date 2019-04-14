@@ -13,6 +13,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ReflectionUtils;
@@ -121,6 +122,9 @@ public class DhtUtil {
     public static List<Node> getNodeListByMap(Map<String,Object> rMap) {
         List<Node> nodeList = Lists.newLinkedList();
         String nodes = getString(rMap, "nodes");
+        if (StringUtils.isBlank(nodes)) {
+            return Lists.newArrayList();
+        }
         byte[] bytes = nodes.getBytes(CharsetUtil.ISO_8859_1);
         for (int i = 0; i < bytes.length; i+= NODE_LENGTH) {
             Node node = Node.buildNode(ArrayUtils.subarray(bytes, i, i + NODE_LENGTH));

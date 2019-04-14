@@ -6,6 +6,7 @@ import com.kaiscript.dht.crawler.util.ByteUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.util.CharsetUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import java.util.Map;
  * Created by kaiscript on 2019/4/7.
  */
 @Service
+@Slf4j
 public class MetadataService {
 
     @Autowired
@@ -57,6 +59,7 @@ public class MetadataService {
         //peer_id: 20-byte string used as a unique ID for the client
         System.arraycopy(selfHash, 0, handshakeBytes, 48, 20);
         channel.writeAndFlush(Unpooled.copiedBuffer(handshakeBytes));
+        log.info("handshake success.infohash:{}", new String(new String(infoHash, CharsetUtil.ISO_8859_1).getBytes(CharsetUtil.UTF_8), CharsetUtil.UTF_8));
     }
 
     /**
@@ -66,18 +69,23 @@ public class MetadataService {
      * 4字节(uint32_t)长度，1字节(uint8_t)固定标志位，1字节(uint8_t)拓展消息标志位，N字节m字典消息体
      */
     public void sendExtendHandshakeMsg(Channel channel) {
-        Map<String,Object> extendMsgMap = Maps.newLinkedHashMap();
-        Map<String, Object> mDictMap = Maps.newLinkedHashMap();
-        mDictMap.put("ut_metadata", 1);
-        extendMsgMap.put("m", mDictMap);
-        byte[] extendBytes = bencode.encodeToBytes(extendMsgMap);
-        byte[] allExtendBytes = new byte[extendBytes.length + 6];
-        byte[] lengthBytes = ByteUtil.int2Bytes(allExtendBytes.length + 2);
-        System.arraycopy(lengthBytes, 0, allExtendBytes, 0, 4);
-        allExtendBytes[4] = BT_MSG_ID;
-        allExtendBytes[5] = EXT_HANDSHAKE_ID;
-        System.arraycopy(extendBytes, 0, allExtendBytes, 6, extendBytes.length);
-        channel.writeAndFlush(Unpooled.copiedBuffer(allExtendBytes));
+        try {
+            Map<String,Object> extendMsgMap = Maps.newLinkedHashMap();
+            Map<String, Object> mDictMap = Maps.newLinkedHashMap();
+            mDictMap.put("ut_metadata", 1);
+            extendMsgMap.put("m", mDictMap);
+            byte[] extendBytes = bencode.encodeToBytes(extendMsgMap);
+            byte[] allExtendBytes = new byte[extendBytes.length + 6];
+            byte[] lengthBytes = ByteUtil.int2Bytes(extendBytes.length + 2);
+            System.arraycopy(lengthBytes, 0, allExtendBytes, 0, 4);
+            allExtendBytes[4] = BT_MSG_ID;
+            allExtendBytes[5] = EXT_HANDSHAKE_ID;
+            System.arraycopy(extendBytes, 0, allExtendBytes, 6, extendBytes.length);
+            channel.writeAndFlush(Unpooled.copiedBuffer(allExtendBytes));
+        } catch (Exception e) {
+            log.error("e:", e);
+        }
+        log.info("sendExtendHandshakeMsg");
     }
 
     /**
@@ -130,6 +138,7 @@ public class MetadataService {
             System.arraycopy(metadataMapBytes, 0, allMetadataMapBytes, 6, metadataMapBytes.length);
             channel.writeAndFlush(Unpooled.copiedBuffer(allMetadataMapBytes));
         }
+        log.info("sendRequestMetadata msgStr:{},pieceNum:{}", msgStr, pieceNum);
     }
 
     /**
@@ -144,6 +153,7 @@ public class MetadataService {
      */
     public byte[] fetchMetadata(String msgStr) {
         String resultStr = msgStr.substring(msgStr.indexOf("ee") + 2, msgStr.length());
+        log.info("fetchMetadata final data");
         return resultStr.getBytes(CharsetUtil.ISO_8859_1);
     }
 

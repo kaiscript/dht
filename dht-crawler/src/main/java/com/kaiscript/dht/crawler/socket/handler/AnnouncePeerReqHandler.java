@@ -13,6 +13,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
@@ -51,7 +52,7 @@ public class AnnouncePeerReqHandler implements MsgHandler {
         findNode.setIp(srcAddress.getHostName());
         findNode.setPort(requestContent.getPort());
         findNodeTask.putNode(findNode);
-        fetchMetadataTask.offer(new FetchMetadata(srcAddress.getHostName(), requestContent.getPort(), infoHash));
+        fetchMetadataTask.offer(new FetchMetadata(srcAddress.getHostString(), srcAddress.getPort(), infoHash));
     }
 
     @Override
