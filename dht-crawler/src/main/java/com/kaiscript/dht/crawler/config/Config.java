@@ -28,7 +28,7 @@ public class Config {
 
         private List<String> initAddresses = Lists.newArrayList();
 
-
+        private String token;
     }
 
 }

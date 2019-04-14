@@ -34,14 +34,29 @@ public class ByteUtil {
 
     /**
      * 大端序
-     * 端口转字节
-     * @param port
+     * 端口转2字节数组
+     * @param val
      * @return
      */
-    public static byte[] int2Bytes(int port) {
+    public static byte[] int2TwoBytes(int val) {
         byte[] bytes = new byte[2];
-        bytes[0] = (byte) ((port >> 8) & 0xFF);
-        bytes[1] = (byte) (port & 0xFF);
+        bytes[0] = (byte) ((val >> 8) & 0xFF);
+        bytes[1] = (byte) (val & 0xFF);
+        return bytes;
+    }
+
+
+    /**
+     * 端口转4字节数组
+     * @param val
+     * @return
+     */
+    public static byte[] int2FourBytes(int val) {
+        byte[] bytes = new byte[4];
+        bytes[0] = (byte) ((val >> 24) & 0xff);
+        bytes[1] = (byte) ((val >> 16) & 0xff);
+        bytes[2] = (byte) ((val >> 8) & 0xff);
+        bytes[3] = (byte) (val & 0xff);
         return bytes;
     }
 
@@ -61,7 +76,7 @@ public class ByteUtil {
      */
     @SneakyThrows
     public static byte[] hexStr2Bytes(String hexStr) {
-        return Hex.decodeHex(hexStr);
+        return Hex.decodeHex(hexStr.toCharArray());
 
     }
 

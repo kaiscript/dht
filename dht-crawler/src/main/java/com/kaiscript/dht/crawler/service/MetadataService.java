@@ -33,7 +33,7 @@ public class MetadataService {
      * 共28个字节
      */
     public static final byte[] HANDSHAKE_PRE_BYTES = {19, 66, 105, 116, 84, 111, 114, 114, 101, 110, 116, 32, 112, 114,
-            111, 116, 111, 99, 111, 108, 0, 0, 0, 0, 0, 0, 0, 0};
+            111, 116, 111, 99, 111, 108, 0, 0, 0, 0, 0, 16, 0, 1};
 
     public static byte BT_MSG_ID = 20;
 
@@ -59,7 +59,7 @@ public class MetadataService {
         //peer_id: 20-byte string used as a unique ID for the client
         System.arraycopy(selfHash, 0, handshakeBytes, 48, 20);
         channel.writeAndFlush(Unpooled.copiedBuffer(handshakeBytes));
-        log.info("handshake success.infohash:{}", new String(new String(infoHash, CharsetUtil.ISO_8859_1).getBytes(CharsetUtil.UTF_8), CharsetUtil.UTF_8));
+        log.info("handshake success.");
     }
 
     /**
@@ -76,14 +76,14 @@ public class MetadataService {
             extendMsgMap.put("m", mDictMap);
             byte[] extendBytes = bencode.encodeToBytes(extendMsgMap);
             byte[] allExtendBytes = new byte[extendBytes.length + 6];
-            byte[] lengthBytes = ByteUtil.int2Bytes(extendBytes.length + 2);
+            byte[] lengthBytes = ByteUtil.int2FourBytes(extendBytes.length + 2);
             System.arraycopy(lengthBytes, 0, allExtendBytes, 0, 4);
             allExtendBytes[4] = BT_MSG_ID;
             allExtendBytes[5] = EXT_HANDSHAKE_ID;
             System.arraycopy(extendBytes, 0, allExtendBytes, 6, extendBytes.length);
             channel.writeAndFlush(Unpooled.copiedBuffer(allExtendBytes));
         } catch (Exception e) {
-            log.error("e:", e);
+            log.error("sendExtendHandshakeMsg e:", e);
         }
         log.info("sendExtendHandshakeMsg");
     }
@@ -131,7 +131,7 @@ public class MetadataService {
             requestMetadataMap.put("piece", 0);
             byte[] metadataMapBytes = bencode.encodeToBytes(requestMetadataMap);
             byte[] allMetadataMapBytes = new byte[metadataMapBytes.length + 6];
-            byte[] lengthBytes = ByteUtil.int2Bytes(metadataMapBytes.length + 2);
+            byte[] lengthBytes = ByteUtil.int2TwoBytes(metadataMapBytes.length + 2);
             System.arraycopy(lengthBytes, 0, allMetadataMapBytes, 0, 4);
             allMetadataMapBytes[4] = BT_MSG_ID;
             allMetadataMapBytes[5] = (byte) utMetadataValue; // >0 = extended message as specified by the handshake.
@@ -153,7 +153,7 @@ public class MetadataService {
      */
     public byte[] fetchMetadata(String msgStr) {
         String resultStr = msgStr.substring(msgStr.indexOf("ee") + 2, msgStr.length());
-        log.info("fetchMetadata final data");
+        log.info("fetchMetadataFinalData");
         return resultStr.getBytes(CharsetUtil.ISO_8859_1);
     }
 

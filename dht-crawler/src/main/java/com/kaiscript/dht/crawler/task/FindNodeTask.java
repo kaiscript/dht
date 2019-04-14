@@ -33,7 +33,7 @@ public class FindNodeTask {
 
     @PostConstruct
     public void staticsIpSize() {
-        service.scheduleAtFixedRate(() -> log.info("ip size:{}", set.size()), 1, 5, TimeUnit.SECONDS);
+        service.scheduleAtFixedRate(() -> log.info("findNode setSize:{}.queue size:{}", set.size(), queue.size()), 1, 5, TimeUnit.SECONDS);
     }
 
     /**
@@ -42,6 +42,9 @@ public class FindNodeTask {
     private BlockingQueue<Node> queue = new LinkedBlockingQueue<>();
 
     public void putNode(Node node) {
+        if (queue.size() >= 100000) {
+            return;
+        }
         queue.offer(node);
         set.add(node.getIp());
     }
@@ -49,19 +52,20 @@ public class FindNodeTask {
     public void start() {
 
         List<String> nodeIds = config.getApp().getNodeIds();
+        List<Integer> ports = config.getApp().getPorts();
         for (int i = 0; i < 100; i++) {
             new Thread(() -> {
                 while (true){
                     try {
-                        for (int j = 0; j < nodeIds.size(); j++) {
+                        for (int j = 0; j < ports.size(); j++) {
                             Node node = queue.take();
                             if (node == null) {
                                 continue;
                             }
                             InetSocketAddress address = new InetSocketAddress(node.getIp(), node.getPort());
-                            dhtClient.findNode(address, nodeIds.get(j), j);
+                            dhtClient.findNode(address, nodeIds.get(j % nodeIds.size()), j);
                         }
-                        Thread.sleep(1000);
+                        Thread.sleep(300);
                     } catch (Exception e) {
                         log.error("findNode e:", e);
                     }

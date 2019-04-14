@@ -1,19 +1,22 @@
 package com.kaiscript.dht.crawler.socket.handler;
 
+import com.kaiscript.dht.crawler.constants.QueryEnum;
 import com.kaiscript.dht.crawler.constants.YEnum;
 import com.kaiscript.dht.crawler.domain.AnnouncePeer;
 import com.kaiscript.dht.crawler.domain.FetchMetadata;
 import com.kaiscript.dht.crawler.domain.Message;
 import com.kaiscript.dht.crawler.domain.Node;
+import com.kaiscript.dht.crawler.socket.client.DhtClient;
 import com.kaiscript.dht.crawler.task.FetchMetadataTask;
 import com.kaiscript.dht.crawler.task.FindNodeTask;
+import com.kaiscript.dht.crawler.util.Bencode;
 import com.kaiscript.dht.crawler.util.DhtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
@@ -25,7 +28,13 @@ import java.util.Map;
 public class AnnouncePeerReqHandler implements MsgHandler {
 
     @Autowired
+    private Bencode bencode;
+
+    @Autowired
     private FindNodeTask findNodeTask;
+
+    @Autowired
+    private DhtClient dhtClient;
 
     @Autowired
     private FetchMetadataTask fetchMetadataTask;
@@ -43,9 +52,20 @@ public class AnnouncePeerReqHandler implements MsgHandler {
 //            log.info("infohash null.map:{}", aMap);
             return;
         }
+        //回复
+        if (StringUtils.isNotBlank(message.getTId())) {
+            AnnouncePeer.Response response = new AnnouncePeer.Response(message.getTId());
+            try {
+                dhtClient.writeAndFlush(srcAddress,bencode.encodeToBytes(DhtUtil.beanToMap(response)),message.getIndex());
+            } catch (Exception e) {
+                log.error("AnnouncePeerReqHandler response e,resp:{}", response);
+            }
+        }
+
+
         AnnouncePeer.RequestContent requestContent = new AnnouncePeer.RequestContent(aMap, srcAddress.getPort());
         String infoHash = requestContent.getInfo_hash();
-        log.info("announcePeer infoHash: magnet:?xt=urn:btih:{}", infoHash);
+        log.info("announcePeer infoHash: magnet:?xt=urn:btih:{}.address:{}", infoHash, srcAddress);
 
         //加入寻找节点任务中
         Node findNode = new Node();
@@ -57,7 +77,7 @@ public class AnnouncePeerReqHandler implements MsgHandler {
 
     @Override
     public boolean isExec(Message message) {
-        return message.getY() == YEnum.QUERY;
+        return message.getY() == YEnum.QUERY && message.getQuery() == QueryEnum.ANNOUNCE_PEER;
     }
 
 }

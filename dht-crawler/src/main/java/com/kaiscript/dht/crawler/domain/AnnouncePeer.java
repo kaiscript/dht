@@ -8,7 +8,9 @@ import io.netty.util.CharsetUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.math.NumberUtils;
+import lombok.ToString;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -16,6 +18,8 @@ import java.util.Map;
  * Created by chenkai on 2019/4/4.
  */
 public interface AnnouncePeer {
+
+    static final Logger logger = LoggerFactory.getLogger(AnnouncePeer.class);
 
     @Data
     @NoArgsConstructor
@@ -34,12 +38,16 @@ public interface AnnouncePeer {
         public RequestContent(Map<String,Object> aMap,int sourcePort) {
             id = ByteUtil.byte2HexString(DhtUtil.getString(aMap, "id").getBytes(CharsetUtil.ISO_8859_1));
             info_hash = ByteUtil.byte2HexString(DhtUtil.getString(aMap, "info_hash").getBytes(CharsetUtil.ISO_8859_1));
-            if (aMap.get("implied_port") != null && NumberUtils.toInt((String) aMap.get("implied_port")) != 0) {
-                port = sourcePort;
+            try {
+                if (aMap.get("implied_port") != null && ((Long) aMap.get("implied_port")) != 0) {
+                    port = sourcePort;
+                } else {
+                    port = ((Long) aMap.get("port")).intValue();
+                }
+            } catch (Exception e) {
+                logger.warn("AnnouncePeer aMap:{}", aMap);
             }
-            else{
-                port = NumberUtils.toInt(DhtUtil.getString(aMap, "port"));
-            }
+            token = (String) aMap.get("token");
         }
 
     }
@@ -65,6 +73,7 @@ public interface AnnouncePeer {
 
     }
 
+    @ToString
     class ResponseContent{
 
         String id;
@@ -76,13 +85,15 @@ public interface AnnouncePeer {
      */
     @Data
     @AllArgsConstructor
+    @ToString
     class Response extends CommonParam{
 
         ResponseContent r = new ResponseContent();
 
-        public Response() {
+        public Response(String nodeId) {
             t = new String(DhtUtil.generateTId(), CharsetUtil.ISO_8859_1);
             y = YEnum.RESPONSE.getType();
+            r.id = nodeId;
         }
 
     }

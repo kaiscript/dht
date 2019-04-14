@@ -1,5 +1,6 @@
 package com.kaiscript.dht.crawler.domain;
 
+import com.google.common.base.Splitter;
 import com.kaiscript.dht.crawler.constants.Constants;
 import com.kaiscript.dht.crawler.exception.DhtException;
 import com.kaiscript.dht.crawler.util.ByteUtil;
@@ -70,7 +71,7 @@ public class Node {
         byte[] nodeBytes = new byte[Constants.NODE_LENGTH];
         byte[] nodeIdBytes = node.getNodeId().getBytes(CharsetUtil.ISO_8859_1);
         System.arraycopy(nodeIdBytes, 0, nodeBytes, 0, 20);
-        String[] ipArray = node.getIp().split(".");
+        String[] ipArray = Splitter.on('.').splitToList(node.getIp()).toArray(new String[]{});
 
         //转换ip字节
         byte[] ipBytes = new byte[4];
@@ -79,7 +80,7 @@ public class Node {
         }
         System.arraycopy(ipBytes, 0, nodeBytes, 20, 4);
         //转换端口字节
-        byte[] portBytes = ByteUtil.int2Bytes(node.getPort());
+        byte[] portBytes = ByteUtil.int2TwoBytes(node.getPort());
         System.arraycopy(portBytes, 0, nodeBytes, 24, 2);
 
         return nodeBytes;

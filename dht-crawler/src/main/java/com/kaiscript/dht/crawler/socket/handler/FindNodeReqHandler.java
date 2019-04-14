@@ -37,7 +37,7 @@ public class FindNodeReqHandler implements MsgHandler{
         List<Node> nodeList = routeTable.get8Node();
         List<String> targetNodeIds = config.getApp().getNodeIds();
         byte[] nodeBytes = Node.toBytes(nodeList);
-        FindNode.Response response = new FindNode.Response(targetNodeIds.get(message.getIndex()), new String(nodeBytes, CharsetUtil.ISO_8859_1));
+        FindNode.Response response = new FindNode.Response(targetNodeIds.get(message.getIndex() % targetNodeIds.size()), new String(nodeBytes, CharsetUtil.ISO_8859_1));
         //回复其他节点的findNode
         dhtClient.writeAndFlush(message.getSrcAddress(), bencode.encodeToBytes(DhtUtil.beanToMap(response)), message.getIndex());
         log.info("FindNodeReq ip:{}.port:{}", message.getSrcAddress().getHostName(), message.getSrcAddress().getPort());

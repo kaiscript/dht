@@ -13,12 +13,12 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
+import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -91,7 +91,6 @@ public class DhtUtil {
         String y = getString(data, "y");
         Optional<YEnum> yEnumOptional = EnumUtil.getEnum(y, YEnum.class);
         if (!yEnumOptional.isPresent()) {
-            logger.info("param y of msg is error.map:" + data);
             return Optional.empty();
         }
         YEnum yEnum = yEnumOptional.get();
@@ -112,6 +111,10 @@ public class DhtUtil {
         }
 
         return Optional.of(msg);
+    }
+
+    public String getIpPort(InetSocketAddress address) {
+        return address.getAddress().toString().substring(1);
     }
 
     /**

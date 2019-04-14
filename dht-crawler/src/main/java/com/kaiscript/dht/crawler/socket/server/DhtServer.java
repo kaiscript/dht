@@ -86,7 +86,13 @@ public class DhtServer {
             byte[] bytes = new byte[datagramPacket.content().readableBytes()];
             datagramPacket.content().readBytes(bytes);
 
-            Map<String,Object> decode = (Map<String, Object>) bencode.decode(bytes);
+            Map<String,Object> decode = null;
+            try {
+                decode = (Map<String, Object>) bencode.decode(bytes);
+            } catch (Exception e) {
+                logger.warn("channelRead0 decode obj:{},warn", bencode.decode(bytes));
+                return;
+            }
             Optional<Message> messageOptional = DhtUtil.formatData(decode);
             if (!messageOptional.isPresent()) {
                 return;

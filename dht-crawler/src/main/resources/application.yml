@@ -1,3 +1,4 @@
+
 dht:
   app:
     node-ids:
@@ -8,6 +9,18 @@ dht:
       - 12888
       - 12889
       - 12890
+      - 12891
+      - 12892
+      - 12893
+      - 12894
+      - 12895
+      - 12896
+      - 12897
+      - 12898
+      - 12899
     init-addresses:
       - router.utorrent.com:6881
       - router.bittorrent.com:6881
+    token: kaiscript
+logging:
+  file: /data/log/dth.log

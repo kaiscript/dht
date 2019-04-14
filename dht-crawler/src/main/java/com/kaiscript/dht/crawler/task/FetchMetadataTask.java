@@ -14,6 +14,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.util.CharsetUtil;
 import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -22,7 +24,9 @@ import javax.annotation.PostConstruct;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by kaiscript on 2019/4/8.
@@ -46,7 +50,7 @@ public class FetchMetadataTask {
 
     }
 
-    private Bootstrap bootstap() {
+    private Bootstrap bootstrap() {
         return bootstrap.clone();
     }
 
@@ -60,7 +64,7 @@ public class FetchMetadataTask {
     }
 
     public void startFetch() {
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             new Thread(() -> {
                 while (true) {
                     fetchMetadata();
@@ -74,30 +78,34 @@ public class FetchMetadataTask {
         }
     }
 
+    @SneakyThrows
     private void fetchMetadata() {
         FetchMetadata fetchMetadata = queue.poll();
         if (fetchMetadata == null) {
             return;
         }
+        CountDownLatch countDownLatch = new CountDownLatch(1);
         log.info("fetchMetadata:{}", fetchMetadata);
-        byte[] ret = null;
+        Ret ret = new Ret(countDownLatch);
         String infohashHex = fetchMetadata.getInfohash();
         byte[] infohashBytes = ByteUtil.hexStr2Bytes(infohashHex);
         InetSocketAddress address = new InetSocketAddress(fetchMetadata.getIp(), fetchMetadata.getPort());
-        Bootstrap bootstap = bootstap();
-        bootstap.handler(new FetchMetadatChannelInitializer(ret))
+        Bootstrap bootstrap = bootstrap();
+        bootstrap.handler(new FetchMetadataChannelInitializer(ret))
                 .connect(address)
                 .addListener(new ConnectListener(infohashBytes, DhtUtil.generateNodeId()));
-        if (ret != null) {
-            Metadata metadata = bytes2Metadata(ret, fetchMetadata.getInfohash());
-            log.info("metadata:{}", metadata);
+        countDownLatch.await(20, TimeUnit.SECONDS);
+
+        if (ret.getRet() != null) {
+            Metadata metadata = bytes2Metadata(ret.getRet(), fetchMetadata.getInfohash());
+            log.info("finalGetMetadata:{}", metadata);
         }
     }
 
     @AllArgsConstructor
-    private class FetchMetadatChannelInitializer extends ChannelInitializer{
+    private class FetchMetadataChannelInitializer extends ChannelInitializer{
 
-        private byte[] ret;
+        private Ret ret;
 
         @Override
         protected void initChannel(Channel ch) throws Exception {
@@ -122,7 +130,9 @@ public class FetchMetadataTask {
         public void operationComplete(ChannelFuture future) throws Exception {
             if (future.isSuccess()) {
                 metadataService.handshake(infohash, selfHash, future.channel());
+                return;
             }
+            future.channel().close();
         }
     }
 
@@ -132,10 +142,11 @@ public class FetchMetadataTask {
     @AllArgsConstructor
     private class FetchMetadataHandler extends SimpleChannelInboundHandler<ByteBuf>{
 
-        private byte[] ret;
+        private Ret ret;
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
+            log.info("FetchMetadata receive.address:{}", ctx.channel().remoteAddress());
             Channel channel = ctx.channel();
             byte[] msgBytes = new byte[msg.readableBytes()];
             msg.readBytes(msgBytes);
@@ -147,7 +158,6 @@ public class FetchMetadataTask {
              * 第一个字节是19时为握手消息,需要回复拓展消息
              */
             if (msgBytes[0] == (byte) 19) {
-                log.info("sendExtendHandshakeMsg pre");
                 metadataService.sendExtendHandshakeMsg(channel);
             }
 
@@ -157,9 +167,16 @@ public class FetchMetadataTask {
             }
             //收到的 Extension消息包含msg_type,则可能包含数据
             if (messageStr.contains("msg_type")) {
-                ret = metadataService.fetchMetadata(messageStr);
+                ret.setRet(metadataService.fetchMetadata(messageStr));
+                ret.getCountDownLatch().countDown();
             }
 
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            log.error("connection error.e:{}", cause.getMessage());
+            ctx.close();
         }
     }
 
@@ -170,5 +187,17 @@ public class FetchMetadataTask {
         Map<String,Object> map = (Map<String, Object>) bencode.decode(bencodedMetadata.getBytes(CharsetUtil.UTF_8));
         return DhtUtil.convert(map, infohash);
     }
+
+    @Data
+    class Ret{
+
+        private byte[] ret;
+        private CountDownLatch countDownLatch;
+
+        public Ret(CountDownLatch countDownLatch) {
+            this.countDownLatch = countDownLatch;
+        }
+    }
+
 
 }

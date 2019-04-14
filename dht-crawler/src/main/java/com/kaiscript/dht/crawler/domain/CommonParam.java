@@ -1,9 +1,13 @@
 package com.kaiscript.dht.crawler.domain;
 
+
+import lombok.ToString;
+
 /**
  * 通用请求参数
  * Created by chenkai on 2019/4/2.
  */
+@ToString
 public class CommonParam {
 
     /**
