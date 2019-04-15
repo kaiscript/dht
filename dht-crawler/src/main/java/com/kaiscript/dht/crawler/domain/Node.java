@@ -35,7 +35,7 @@ public class Node {
      */
     public static Node buildNode(byte[] bytes) {
         if (bytes.length < Constants.NODE_LENGTH) {
-            throw new DhtException("node bytes length less than " + Constants.NODE_LENGTH);
+            return null;
         }
         byte[] nodeIdBytes = ArrayUtils.subarray(bytes, 0, 20);
         byte[] ipBytes = ArrayUtils.subarray(bytes, 20, 24);

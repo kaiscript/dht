@@ -142,22 +142,6 @@ public class MetadataService {
     }
 
 
-    /**
-     * 获取二进制数据。
-     * metadata数据
-     * Example:
-     {'msg_type': 1, 'piece': 0, 'total_size': 3425}
-     d8:msg_typei1e5:piecei0e10:total_sizei34256eexxxxxxxx...
-     The x represents binary data (the metadata).
-     * @param msgStr
-     * @return
-     */
-    public byte[] fetchMetadata(String msgStr) {
-        String resultStr = msgStr.substring(msgStr.indexOf("ee") + 2, msgStr.length());
-        log.info("fetchMetadataFinalData");
-        return resultStr.getBytes(CharsetUtil.ISO_8859_1);
-    }
-
     public static void main(String[] args) {
         Bencode bencode = new Bencode();
         String msgStr = "BitTorrent protocoll6a3Õæ!®À$NUÁµi5-BC0155-67|óéebG\t@vd1:ei0e1:md11:ut_metadatai1e6:ut_pexi2ee13:metadata_sizei5278e1:pi16398e4:reqqi50e1:v13:BitComet 1.556:yourip4:- W¶e2HÀ";

@@ -17,6 +17,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -94,11 +95,14 @@ public class FetchMetadataTask {
         bootstrap.handler(new FetchMetadataChannelInitializer(ret))
                 .connect(address)
                 .addListener(new ConnectListener(infohashBytes, DhtUtil.generateNodeId()));
-        countDownLatch.await(20, TimeUnit.SECONDS);
+        countDownLatch.await(1, TimeUnit.MINUTES);
 
         if (ret.getRet() != null) {
             Metadata metadata = bytes2Metadata(ret.getRet(), fetchMetadata.getInfohash());
-            log.info("finalGetMetadata:{}", metadata);
+            log.info("infohashHex:{},finalGetMetadata:{}", infohashHex, metadata);
+        }
+        else{
+            log.info("infohashHex:{}", infohashHex);
         }
     }
 
@@ -110,7 +114,7 @@ public class FetchMetadataTask {
         @Override
         protected void initChannel(Channel ch) throws Exception {
             ch.pipeline()
-                    .addLast(new ReadTimeoutHandler(10))
+                    .addLast(new ReadTimeoutHandler(60))
                     .addLast(new FetchMetadataHandler(ret));
         }
 
@@ -168,10 +172,31 @@ public class FetchMetadataTask {
             //收到的 Extension消息包含msg_type,则可能包含数据
             log.info("receive:{}", new String(msgBytes, CharsetUtil.UTF_8));
             if (messageStr.contains("msg_type")) {
-                ret.setRet(metadataService.fetchMetadata(messageStr));
-                ret.getCountDownLatch().countDown();
+                fetchMetadata(messageStr);
             }
 
+        }
+
+        /**
+         * 获取二进制数据。
+         * metadata数据
+         * Example:
+         {'msg_type': 1, 'piece': 0, 'total_size': 3425}
+         d8:msg_typei1e5:piecei0e10:total_sizei34256eexxxxxxxx...
+         The x represents binary data (the metadata).
+         * @param msgStr
+         * @return
+         */
+        public void fetchMetadata(String msgStr) {
+            String resultStr = msgStr.substring(msgStr.indexOf("ee") + 2, msgStr.length());
+            byte[] resultStrBytes = resultStr.getBytes(CharsetUtil.ISO_8859_1);
+            if (ret.getRet() == null) {
+                ret.setRet(resultStrBytes);
+            } else {
+                ret.setRet(ArrayUtils.addAll(ret.getRet(), resultStrBytes));
+            }
+            ret.getCountDownLatch().countDown();
+            log.info("fetchMetadataFinalData resultStr:{}", new String(resultStrBytes, CharsetUtil.UTF_8));
         }
 
         @Override
@@ -183,6 +208,7 @@ public class FetchMetadataTask {
 
     private Metadata bytes2Metadata(byte[] bytes,String infohash) {
         String str = new String(bytes, CharsetUtil.UTF_8);
+        log.info("bytes2Metadata ret:{}", str);
         //种子文件的sha1 杂凑值前是 6:pieces
         Bencode bencode = new Bencode(CharsetUtil.UTF_8);
         String bencodedMetadata = str.substring(0, str.indexOf("6:pieces")) + "e";

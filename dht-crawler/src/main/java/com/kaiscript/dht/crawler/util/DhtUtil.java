@@ -131,7 +131,9 @@ public class DhtUtil {
         byte[] bytes = nodes.getBytes(CharsetUtil.ISO_8859_1);
         for (int i = 0; i < bytes.length; i+= NODE_LENGTH) {
             Node node = Node.buildNode(ArrayUtils.subarray(bytes, i, i + NODE_LENGTH));
-            nodeList.add(node);
+            if (node != null) {
+                nodeList.add(node);
+            }
         }
         return nodeList;
     }
