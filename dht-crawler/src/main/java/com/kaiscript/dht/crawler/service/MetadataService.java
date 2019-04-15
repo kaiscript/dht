@@ -124,14 +124,14 @@ public class MetadataService {
         //matadata_size 为integer,取 i跟e之间的值
         int metadataSize = Integer.parseInt(otherStr.substring(0, otherStr.indexOf("e")));
         //多少块
-        int pieceNum = (int) Math.ceil(metadataSize / METADATA_PIECE_SIZE);
+        int pieceNum = (int) Math.ceil((double) metadataSize / METADATA_PIECE_SIZE);
         for (int i = 0; i < pieceNum; i++) {
             Map<String, Object> requestMetadataMap = Maps.newLinkedHashMap();
             requestMetadataMap.put("msg_type", 0);
             requestMetadataMap.put("piece", 0);
             byte[] metadataMapBytes = bencode.encodeToBytes(requestMetadataMap);
             byte[] allMetadataMapBytes = new byte[metadataMapBytes.length + 6];
-            byte[] lengthBytes = ByteUtil.int2TwoBytes(metadataMapBytes.length + 2);
+            byte[] lengthBytes = ByteUtil.int2FourBytes(metadataMapBytes.length + 2);
             System.arraycopy(lengthBytes, 0, allMetadataMapBytes, 0, 4);
             allMetadataMapBytes[4] = BT_MSG_ID;
             allMetadataMapBytes[5] = (byte) utMetadataValue; // >0 = extended message as specified by the handshake.
@@ -140,6 +140,7 @@ public class MetadataService {
         }
         log.info("sendRequestMetadata msgStr:{},pieceNum:{}", msgStr, pieceNum);
     }
+
 
     /**
      * 获取二进制数据。
@@ -155,6 +156,32 @@ public class MetadataService {
         String resultStr = msgStr.substring(msgStr.indexOf("ee") + 2, msgStr.length());
         log.info("fetchMetadataFinalData");
         return resultStr.getBytes(CharsetUtil.ISO_8859_1);
+    }
+
+    public static void main(String[] args) {
+        Bencode bencode = new Bencode();
+        String msgStr = "BitTorrent protocoll6a3Õæ!®À$NUÁµi5-BC0155-67|óéebG\t@vd1:ei0e1:md11:ut_metadatai1e6:ut_pexi2ee13:metadata_sizei5278e1:pi16398e4:reqqi50e1:v13:BitComet 1.556:yourip4:- W¶e2HÀ";
+        int utMetadataValueIndex = msgStr.indexOf(UT_METADATA) + UT_METADATA.length() + 1;
+        //ut_metadata 的值为integer.故取 i 后面的值,一个字节
+        int utMetadataValue = Integer.parseInt(msgStr.substring(utMetadataValueIndex, utMetadataValueIndex + 1));
+        int metadataSizeIndex = msgStr.indexOf(METADATA_SIZE) + METADATA_SIZE.length() + 1;
+        String otherStr = msgStr.substring(metadataSizeIndex);
+        //matadata_size 为integer,取 i跟e之间的值
+        int metadataSize = Integer.parseInt(otherStr.substring(0, otherStr.indexOf("e")));
+        //多少块
+        int pieceNum = (int) Math.ceil((double) metadataSize / METADATA_PIECE_SIZE);
+        for (int i = 0; i < pieceNum; i++) {
+            Map<String, Object> requestMetadataMap = Maps.newLinkedHashMap();
+            requestMetadataMap.put("msg_type", 0);
+            requestMetadataMap.put("piece", 0);
+            byte[] metadataMapBytes = bencode.encodeToBytes(requestMetadataMap);
+            byte[] allMetadataMapBytes = new byte[metadataMapBytes.length + 6];
+            byte[] lengthBytes = ByteUtil.int2FourBytes(metadataMapBytes.length + 2);
+            System.arraycopy(lengthBytes, 0, allMetadataMapBytes, 0, 4);
+            allMetadataMapBytes[4] = BT_MSG_ID;
+            allMetadataMapBytes[5] = (byte) utMetadataValue; // >0 = extended message as specified by the handshake.
+            System.arraycopy(metadataMapBytes, 0, allMetadataMapBytes, 6, metadataMapBytes.length);
+        }
     }
 
 }
