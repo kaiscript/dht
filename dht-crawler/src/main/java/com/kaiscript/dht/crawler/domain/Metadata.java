@@ -31,6 +31,8 @@ public class Metadata {
     @NoArgsConstructor
     public static class Info{
 
+        private String name;
+
         private String path;
 
         private long length;
