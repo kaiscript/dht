@@ -173,13 +173,14 @@ public class DhtUtil {
                     }
                     info.setPath(sb.toString());
                 }
+                info.setName((String) file.get("path"));
                 return info;
             }).collect(Collectors.toList());
             metadata.setLength(infos.stream().mapToLong(Metadata.Info::getLength).sum());
         }
         else {
             long length = (long) map.get("length");
-            infos = Collections.singletonList(new Metadata.Info(metadata.getName(), length));
+            infos = Collections.singletonList(new Metadata.Info(metadata.getName(), metadata.getName(), length));
             metadata.setLength(length);
         }
         metadata.setInfos(infos);
