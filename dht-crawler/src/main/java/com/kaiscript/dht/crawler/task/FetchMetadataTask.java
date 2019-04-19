@@ -39,7 +39,7 @@ public class FetchMetadataTask {
     private Bootstrap bootstrap;
 
     @Autowired
-    private Bencode bencode;
+    private ParserTask parserTask;
 
     @PostConstruct
     public void fetchMetadataTask() {
@@ -102,6 +102,7 @@ public class FetchMetadataTask {
             log.info("infohashHex:{},finalGetMetadata:{}", infohashHex, metadata);
         }
         else{
+            parserTask.offer(infohashHex);
             log.info("infohashHex:{}", infohashHex);
         }
     }

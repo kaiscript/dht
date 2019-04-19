@@ -1,9 +1,12 @@
 package com.kaiscript.dht.crawler.task;
 
 import com.google.common.collect.Sets;
+import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnels;
 import com.kaiscript.dht.crawler.config.Config;
 import com.kaiscript.dht.crawler.domain.Node;
 import com.kaiscript.dht.crawler.socket.client.DhtClient;
+import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -31,6 +34,8 @@ public class FindNodeTask {
 
     ScheduledExecutorService service = Executors.newScheduledThreadPool(2);
 
+    private BloomFilter<String> ipPortBloomFilter = BloomFilter.create(Funnels.stringFunnel(CharsetUtil.UTF_8), 1000000, 0.01);
+
     @PostConstruct
     public void staticsIpSize() {
         service.scheduleAtFixedRate(() -> log.info("findNode setSize:{}.queue size:{}", set.size(), queue.size()), 1, 5, TimeUnit.SECONDS);
@@ -42,9 +47,11 @@ public class FindNodeTask {
     private BlockingQueue<Node> queue = new LinkedBlockingQueue<>();
 
     public void putNode(Node node) {
-        if (queue.size() >= 10000) {
+        String str = node.getIp() + ":" + node.getPort();
+        if (ipPortBloomFilter.mightContain(str)) {
             return;
         }
+        ipPortBloomFilter.put(str);
         queue.offer(node);
         set.add(node.getIp());
     }
@@ -53,7 +60,7 @@ public class FindNodeTask {
 
         List<String> nodeIds = config.getApp().getNodeIds();
         List<Integer> ports = config.getApp().getPorts();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < config.getApp().getTaskThreadNum(); i++) {
             new Thread(() -> {
                 while (true){
                     try {
@@ -65,7 +72,7 @@ public class FindNodeTask {
                             InetSocketAddress address = new InetSocketAddress(node.getIp(), node.getPort());
                             dhtClient.findNode(address, nodeIds.get(j % nodeIds.size()), j);
                         }
-                        Thread.sleep(10);
+                        Thread.sleep(config.getApp().getTaskThreadPeriod());
                     } catch (Exception e) {
                         log.error("findNode e:", e);
                     }

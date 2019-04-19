@@ -7,6 +7,7 @@ import com.kaiscript.dht.crawler.domain.Message;
 import com.kaiscript.dht.crawler.domain.Node;
 import com.kaiscript.dht.crawler.route.RouteTable;
 import com.kaiscript.dht.crawler.socket.client.DhtClient;
+import com.kaiscript.dht.crawler.task.FindNodeTask;
 import com.kaiscript.dht.crawler.util.Bencode;
 import com.kaiscript.dht.crawler.util.DhtUtil;
 import io.netty.util.CharsetUtil;
@@ -31,6 +32,8 @@ public class FindNodeReqHandler implements MsgHandler{
     private DhtClient dhtClient;
     @Autowired
     private Bencode bencode;
+    @Autowired
+    private FindNodeTask findNodeTask;
 
     @Override
     public void handle(Message message) {
@@ -41,6 +44,10 @@ public class FindNodeReqHandler implements MsgHandler{
         //回复其他节点的findNode
         dhtClient.writeAndFlush(message.getSrcAddress(), bencode.encodeToBytes(DhtUtil.beanToMap(response)), message.getIndex());
         log.info("FindNodeReq ip:{}.port:{}", message.getSrcAddress().getHostName(), message.getSrcAddress().getPort());
+
+        String firstNodeId = targetNodeIds.get(0);
+        findNodeTask.putNode(new Node(firstNodeId, message.getSrcAddress().getHostString(), message.getSrcAddress().getPort()));
+
     }
 
     @Override

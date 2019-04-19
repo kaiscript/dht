@@ -1,4 +1,3 @@
-
 dht:
   app:
     node-ids:
@@ -18,9 +17,20 @@ dht:
       - 12897
       - 12898
       - 12899
+      - 12900
     init-addresses:
       - router.utorrent.com:6881
       - router.bittorrent.com:6881
     token: kaiscript
+    taskThreadNum: 100
+    taskThreadPeriod: 10
 logging:
   file: /data/log/dth.log
+spring:
+  data:
+    mongodb:
+      uri: mongodb://127.0.0.1:27017/dht
+      option:
+        max-wait-time: 120000
+        connect-timeout: 10000
+
