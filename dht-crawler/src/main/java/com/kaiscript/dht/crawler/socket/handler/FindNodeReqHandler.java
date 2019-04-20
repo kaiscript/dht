@@ -45,8 +45,10 @@ public class FindNodeReqHandler implements MsgHandler{
         dhtClient.writeAndFlush(message.getSrcAddress(), bencode.encodeToBytes(DhtUtil.beanToMap(response)), message.getIndex());
         log.info("FindNodeReq ip:{}.port:{}", message.getSrcAddress().getHostName(), message.getSrcAddress().getPort());
 
-        String firstNodeId = targetNodeIds.get(0);
-        findNodeTask.putNode(new Node(firstNodeId, message.getSrcAddress().getHostString(), message.getSrcAddress().getPort()));
+        Node node = new Node();
+        node.setIp(message.getSrcAddress().getHostString());
+        node.setPort(message.getSrcAddress().getPort());
+        findNodeTask.putNode(node);
 
     }
 

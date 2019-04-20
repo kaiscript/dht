@@ -1,6 +1,5 @@
 package com.kaiscript.dht.crawler.task;
 
-import com.google.common.collect.Sets;
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 import com.kaiscript.dht.crawler.config.Config;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.net.InetSocketAddress;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.*;
 
 /**
@@ -30,15 +28,13 @@ public class FindNodeTask {
     @Autowired
     private DhtClient dhtClient;
 
-    private Set<String> set = Sets.newHashSet();
-
     ScheduledExecutorService service = Executors.newScheduledThreadPool(2);
 
     private BloomFilter<String> ipPortBloomFilter = BloomFilter.create(Funnels.stringFunnel(CharsetUtil.UTF_8), 1000000, 0.01);
 
     @PostConstruct
     public void staticsIpSize() {
-        service.scheduleAtFixedRate(() -> log.info("findNode setSize:{}.queue size:{}", set.size(), queue.size()), 1, 5, TimeUnit.SECONDS);
+        service.scheduleAtFixedRate(() -> log.info("BloomFilter size:{}.queue size:{}", ipPortBloomFilter.approximateElementCount(), queue.size()), 1, 3, TimeUnit.SECONDS);
     }
 
     /**
@@ -53,7 +49,6 @@ public class FindNodeTask {
         }
         ipPortBloomFilter.put(str);
         queue.offer(node);
-        set.add(node.getIp());
     }
 
     public void start() {
