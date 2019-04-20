@@ -3,6 +3,7 @@ package com.kaiscript.dht.crawler.task;
 import com.kaiscript.dht.crawler.domain.FetchMetadata;
 import com.kaiscript.dht.crawler.domain.Metadata;
 import com.kaiscript.dht.crawler.service.MetadataService;
+import com.kaiscript.dht.crawler.service.PeerInfohashService;
 import com.kaiscript.dht.crawler.util.Bencode;
 import com.kaiscript.dht.crawler.util.ByteUtil;
 import com.kaiscript.dht.crawler.util.DhtUtil;
@@ -38,9 +39,6 @@ public class FetchMetadataTask {
 
     private Bootstrap bootstrap;
 
-    @Autowired
-    private ParserTask parserTask;
-
     @PostConstruct
     public void fetchMetadataTask() {
         bootstrap = new Bootstrap()
@@ -57,6 +55,8 @@ public class FetchMetadataTask {
 
     @Autowired
     private MetadataService metadataService;
+    @Autowired
+    private PeerInfohashService peerInfohashService;
 
     private Queue<FetchMetadata> queue = new LinkedBlockingQueue<>();
 
@@ -95,15 +95,12 @@ public class FetchMetadataTask {
         bootstrap.handler(new FetchMetadataChannelInitializer(ret))
                 .connect(address)
                 .addListener(new ConnectListener(infohashBytes, DhtUtil.generateNodeId()));
-        countDownLatch.await(1, TimeUnit.MINUTES);
+        countDownLatch.await(10, TimeUnit.SECONDS);
 
         if (ret.getRet() != null) {
             Metadata metadata = bytes2Metadata(ret.getRet(), fetchMetadata.getInfohash());
+            peerInfohashService.removeFormInfohash(fetchMetadata.getInfohash());
             log.info("infohashHex:{},finalGetMetadata:{}", infohashHex, metadata);
-        }
-        else{
-            parserTask.offer(infohashHex);
-            log.info("infohashHex:{}", infohashHex);
         }
     }
 

@@ -3,12 +3,12 @@ package com.kaiscript.dht.crawler.socket.handler;
 import com.kaiscript.dht.crawler.constants.QueryEnum;
 import com.kaiscript.dht.crawler.constants.YEnum;
 import com.kaiscript.dht.crawler.domain.AnnouncePeer;
-import com.kaiscript.dht.crawler.domain.FetchMetadata;
 import com.kaiscript.dht.crawler.domain.Message;
 import com.kaiscript.dht.crawler.domain.Node;
+import com.kaiscript.dht.crawler.service.PeerInfohashService;
 import com.kaiscript.dht.crawler.socket.client.DhtClient;
-import com.kaiscript.dht.crawler.task.FetchMetadataTask;
 import com.kaiscript.dht.crawler.task.FindNodeTask;
+import com.kaiscript.dht.crawler.task.ParserTask;
 import com.kaiscript.dht.crawler.util.Bencode;
 import com.kaiscript.dht.crawler.util.DhtUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,9 @@ public class AnnouncePeerReqHandler implements MsgHandler {
     private DhtClient dhtClient;
 
     @Autowired
-    private FetchMetadataTask fetchMetadataTask;
+    private PeerInfohashService peerInfohashService;
+    @Autowired
+    private ParserTask parserTask;
 
     @Override
     public void handle(Message message) {
@@ -49,7 +51,6 @@ public class AnnouncePeerReqHandler implements MsgHandler {
         InetSocketAddress srcAddress = message.getSrcAddress();
         Object info_hash = aMap.get("info_hash");
         if (info_hash == null) {
-//            log.info("infohash null.map:{}", aMap);
             return;
         }
         //回复
@@ -66,13 +67,15 @@ public class AnnouncePeerReqHandler implements MsgHandler {
         AnnouncePeer.RequestContent requestContent = new AnnouncePeer.RequestContent(aMap, srcAddress.getPort());
         String infoHash = requestContent.getInfo_hash();
         log.info("announcePeer infoHash: magnet:?xt=urn:btih:{}.address:{}", infoHash, srcAddress);
-
+        //保存临时infohash
+        peerInfohashService.savePeerInfohash(srcAddress.getHostName(), requestContent.getPort(), infoHash);
+        parserTask.offer(infoHash);
         //加入寻找节点任务中
         Node findNode = new Node();
         findNode.setIp(srcAddress.getHostName());
         findNode.setPort(requestContent.getPort());
         findNodeTask.putNode(findNode);
-        fetchMetadataTask.offer(new FetchMetadata(srcAddress.getHostString(), srcAddress.getPort(), infoHash));
+
     }
 
     @Override

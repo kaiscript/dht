@@ -30,7 +30,7 @@ public class FindNodeTask {
 
     ScheduledExecutorService service = Executors.newScheduledThreadPool(2);
 
-    private BloomFilter<String> ipPortBloomFilter = BloomFilter.create(Funnels.stringFunnel(CharsetUtil.UTF_8), 1000000, 0.01);
+    private BloomFilter<String> ipPortBloomFilter = BloomFilter.create(Funnels.stringFunnel(CharsetUtil.UTF_8), 10000000, 0.01);
 
     @PostConstruct
     public void staticsIpSize() {
