@@ -25,7 +25,8 @@ Kademlia 会将节点 映射到一个二叉树，每一个节点都是这个二�
 
 ### 嗅探攻击
 
-嗅探攻击的原理是加入DHT网络，然后利用 分布式哈希表，不断地认识更多的节点（find_node），并监听其他节点的 get_peers 请求，这样就能爬取到其他节点共享的资源。
+嗅探攻击的原理是加入DHT网络，然后利用 分布式哈希表，不断地认识更多的节点（find_node），并监听其他节点的 get_peers 请求，
+这样就能爬取到其他节点共享的资源。
 
 1.新节点A请求某个引导节点B，并将其加入到自己的K桶中。
 
@@ -50,7 +51,7 @@ KRPC协议是由BENCODE编码组成的一个简单的RPC结构,BENCODE编码 4�
 
 一条KRPC消息可以代表请求request，也可以代表响应response，由字典组成。
 
-请求request 包括了以下4种协议：
+请求 request 包括了以下4种协议：
 - ping
 
     检测节点是否可达
@@ -65,7 +66,8 @@ KRPC协议是由BENCODE编码组成的一个简单的RPC结构,BENCODE编码 4�
 
     表明发出 announce_peer 请求的节点，正在下载 torrent 文件
     
-#### 数据结构可参见 [BEP-0005](http://bittorrent.org/beps/bep_0005.html) 协议，对应代码可参考 
+    
+Queries 协议数据结构可参见 [BEP-0005](http://bittorrent.org/beps/bep_0005.html) 协议，对应代码可参考 
 `com.kaiscript.dht.crawler.domain`
 
 ### Handshake、BitTorrent协议扩展
@@ -75,7 +77,7 @@ KRPC协议是由BENCODE编码组成的一个简单的RPC结构,BENCODE编码 4�
 跟其他节点握手，让对端感知节点的存在。 
 然后通过BitTorrent拓展协议 [BEP-0009](http://bittorrent.org/beps/bep_0009.html) 获取对方的拓展信息，拓展信息包括了种子的info_hash。
 
-Extension消息都是bencode编码,有3类不同的消息:
+Extension消息都是bencode编码,有3类不同的消息：
 - request
 - data
 - reject
@@ -89,9 +91,10 @@ d8:msg_typei1e5:piecei0e10:total_sizei34256eexxxxxxxx...
 The x represents binary data (the metadata).
 ```
 metadata的结构参见 [Metainfo_File_Structure](https://wiki.theory.org/index.php/BitTorrentSpecification#Metainfo_File_Structure)。
-那么此时就可以对metadata进行解析，得到种子文件信息了,解析代码参考 `com.kaiscript.dht.crawler.util.DhtUtil.convert`
+那么此时就可以对metadata进行解析，得到种子文件信息了，解析代码参考 `com.kaiscript.dht.crawler.util.DhtUtil.convert`
 
-握手协议数据结构参见 [Handshake](https://wiki.theory.org/index.php/BitTorrentSpecification#Handshake)。
+握手协议数据结构参见 [Handshake](https://wiki.theory.org/index.php/BitTorrentSpecification#Handshake)
+
 拓展协议数据结构参见 [BEP-0009](http://bittorrent.org/beps/bep_0009.html) 
 
 ## 项目结构
